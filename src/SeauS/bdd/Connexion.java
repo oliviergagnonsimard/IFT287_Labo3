@@ -68,7 +68,7 @@ public class Connexion implements IConnexion
     /**
      * Fermeture d'une connexion
      */
-    public void fermer() throws SQLException
+    public void fermer() throws Exception
     {
         client.close();
         System.out.println("Connexion fermée");

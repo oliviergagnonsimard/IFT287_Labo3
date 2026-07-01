@@ -1,4 +1,4 @@
-package SeauS.tables;
+package SeauS.collections;
 
 import SeauS.bdd.Connexion;
 import java.sql.PreparedStatement;

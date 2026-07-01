@@ -1,8 +1,8 @@
-package SeauS.tables;
+package SeauS.collections;
 
 import SeauS.SeauSException;
 import SeauS.bdd.Connexion;
-import SeauS.tuples.Projet;
+import SeauS.documents.Projet;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;

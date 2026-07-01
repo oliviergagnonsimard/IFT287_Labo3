@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ift287-labo6-seaus-main.iml" filepath="$PROJECT_DIR$/.idea/ift287-labo6-seaus-main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/LaboMongo.iml" filepath="$PROJECT_DIR$/.idea/LaboMongo.iml" />
     </modules>
   </component>
 </project>

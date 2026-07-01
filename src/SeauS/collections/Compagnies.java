@@ -1,7 +1,7 @@
-package SeauS.tables;
+package SeauS.collections;
 
 import SeauS.bdd.Connexion;
-import SeauS.tuples.Compagnie;
+import SeauS.documents.Compagnie;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;

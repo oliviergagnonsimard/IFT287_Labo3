@@ -2,10 +2,10 @@ package SeauS.gestion;
 
 import SeauS.SeauSException;
 import SeauS.bdd.Connexion;
-import SeauS.tables.Communautes;
-import SeauS.tables.Projets;
-import SeauS.tuples.Communaute;
-import SeauS.tuples.Projet;
+import SeauS.collections.Communautes;
+import SeauS.collections.Projets;
+import SeauS.documents.Communaute;
+import SeauS.documents.Projet;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
