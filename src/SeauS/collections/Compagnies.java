@@ -1,136 +1,66 @@
 package SeauS.collections;
 
+import org.bson.Document;
+
+import com.mongodb.client.MongoCollection;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.combine;
+import static com.mongodb.client.model.Updates.set;
+
 import SeauS.bdd.Connexion;
 import SeauS.documents.Compagnie;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 public class Compagnies extends GestionTables {
 
-    private final PreparedStatement stmtExisteCompagnie;
-    private final PreparedStatement stmtExisteCompagnie_id;
-    private final PreparedStatement stmtInsertCompagnie;
-    private final PreparedStatement stmtUpdateCompagnie;
-    private final PreparedStatement stmtDeleteCompagnie;
-    private final PreparedStatement stmtSelectCompagnie;
+    private MongoCollection<Document> compagnieCollection;
 
-    public Compagnies(Connexion cx) throws SQLException {
+    public Compagnies(Connexion cx) {
         super(cx);
 
-        stmtExisteCompagnie = cx.getConnection().prepareStatement(
-                "select idcompagnie, nom_compagnie, adresse from compagnie where nom_compagnie = ?");
-        stmtExisteCompagnie_id = cx.getConnection().prepareStatement(
-                "select idcompagnie, nom_compagnie, adresse from compagnie where idcompagnie = ?");
-        stmtInsertCompagnie = cx.getConnection().prepareStatement(
-                "insert into compagnie (nom_compagnie, adresse) values (?,?)");
-        stmtUpdateCompagnie = cx.getConnection().prepareStatement(
-                "update compagnie set nom_compagnie = ?, adresse = ? where nom_compagnie = ?");
-        stmtDeleteCompagnie = cx.getConnection().prepareStatement(
-                "delete from compagnie where nom_compagnie = ?");
-
-        stmtSelectCompagnie = cx.getConnection().prepareStatement(
-            "select * from compagnie where nom_compagnie = ?");
+        compagnieCollection = cx.getDatabase().getCollection("compagnie");
     }
 
     /* Statements SELECT */
-    public boolean existe(String nom) throws SQLException {
-        stmtExisteCompagnie.setString(1, nom);
-
-        ResultSet rs;
-        try {
-            rs = stmtExisteCompagnie.executeQuery();
-            boolean result = rs.next();
-            rs.close();
-            return result;
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL" + e);
-        }
+    public boolean existe(String nom) {
+        return compagnieCollection.find(eq("nom_compagnie", nom)).first() != null;
     }
 
-    public boolean existe(int idCompagnie) throws SQLException {
-        stmtExisteCompagnie_id.setInt(1, idCompagnie);
-
-        ResultSet rs;
-        try {
-            rs = stmtExisteCompagnie_id.executeQuery();
-            boolean result = rs.next();
-            rs.close();
-            return result;
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL" + e);
-        }
+    public boolean existe(int idCompagnie) {
+        return compagnieCollection.find(eq("idcompagnie", idCompagnie)).first() != null;
     }
 
-    public ResultSet getCompagnie(String nom) throws SQLException {
-        stmtSelectCompagnie.setString(1, nom);
-
-        ResultSet rs;
-        try {
-            rs = stmtSelectCompagnie.executeQuery();
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL: " + e);
-        }
-
-        return rs;
+    public Compagnie getCompagnie(String nom) {
+        Document c = compagnieCollection.find(eq("nom_compagnie", nom)).first();
+        if (c != null)
+            return new Compagnie(c);
+        return null;
     }
 
-    public ResultSet getCompagnieWithID(Compagnie c) throws SQLException {
-        stmtExisteCompagnie_id.setInt(1, c.idCompagnie);
-
-        ResultSet rs;
-        try {
-            rs = stmtExisteCompagnie_id.executeQuery();
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL: " + e);
-        }
-
-        return rs;
+    public Compagnie getCompagnieWithID(Compagnie c) {
+        Document d = compagnieCollection.find(eq("nom_compagnie", c.idCompagnie)).first();
+        if (d != null)
+            return new Compagnie(d);
+        return null;
     }
 
     /* Statements INSERT */
-    public int ajouterCompagnie(Compagnie c) throws SQLException {
-        stmtInsertCompagnie.setString(1, c.nom_compagnie);
-        stmtInsertCompagnie.setString(2, c.adresse);
+    public int ajouterCompagnie(Compagnie c) {
+        compagnieCollection.insertOne(c.toDocument());
 
-        int rs = 0;
-        try {
-            rs = stmtInsertCompagnie.executeUpdate();
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL: " + e);
-        }
-
-        return rs;
+        return 1;
+    }
+    
+    /* Statements DELETE */
+    public int supprimerCompagnie(String nom) {
+    	return (int)compagnieCollection.deleteOne(eq("nom_compagnie", nom)).getDeletedCount();
     }
 
     /* Statements UPDATE */
-    public int editerCompagnie(Compagnie c, String ancienNom) throws SQLException {
-        stmtUpdateCompagnie.setString(1, c.nom_compagnie);
-        stmtUpdateCompagnie.setString(2, c.adresse);
-        stmtUpdateCompagnie.setString(3, ancienNom);
-
-        int rs = 0;
-        try {
-            rs = stmtUpdateCompagnie.executeUpdate();
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL: " + e);
-        }
-
-        return rs;
+    public int editerCompagnie(Compagnie c, String ancienNom) {
+        return (int) compagnieCollection.updateOne(eq("nom_compagnie", ancienNom),
+         combine(
+            set("nom_communaute", c.nom_compagnie),
+            set("adresse", c.adresse)
+        )).getModifiedCount();
     }
-
-    /* Statements DELETE */
-    public int supprimerCompagnie(String nom) throws SQLException {
-        stmtDeleteCompagnie.setString(1, nom);
-
-        int rs = 0;
-        try {
-            rs = stmtDeleteCompagnie.executeUpdate();
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL: " + e);
-        }
-
-        return rs;
-    }
-
 }

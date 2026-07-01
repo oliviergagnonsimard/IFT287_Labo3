@@ -2,7 +2,7 @@ package SeauS;
 
 import SeauS.bdd.Connexion;
 import SeauS.gestion.*;
-import SeauS.tables.*;
+import SeauS.collections.*;
 import java.sql.SQLException;
 
 public class GestionSeauS {

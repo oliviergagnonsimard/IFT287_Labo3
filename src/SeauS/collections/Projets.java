@@ -1,142 +1,72 @@
 package SeauS.collections;
 
+import java.sql.SQLException;
+
+import org.bson.Document;
+
+import com.mongodb.client.MongoCollection;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.combine;
+import static com.mongodb.client.model.Updates.set;
+
 import SeauS.SeauSException;
 import SeauS.bdd.Connexion;
 import SeauS.documents.Projet;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 public class Projets extends GestionTables {
 
-    private final PreparedStatement stmtExisteProjet;
-    private final PreparedStatement stmtExisteProjet_id;
-    private final PreparedStatement stmtInsertProjet;
-    private final PreparedStatement stmtUpdateProjet;
-    private final PreparedStatement stmtDeleteProjet;
-
-    private final PreparedStatement stmtSelectProjetsCommu;
-    private final PreparedStatement stmtSelectProjetsComp;
+    private MongoCollection<Document> projetCollection;
 
     public Projets(Connexion cx) throws SQLException {
         super(cx);
 
-        stmtExisteProjet = cx.getConnection().prepareStatement(
-                "select idprojet, idcompagnie, idcommunaute, date_debut, date_fin, date_annonce, budget_initial, "
-                + "budget_final, charge_projet, etat_avancement from projet where idprojet = ?");
-        stmtExisteProjet_id = cx.getConnection().prepareStatement(
-                "select idprojet, idcompagnie, idcommunaute, date_debut, date_fin, date_annonce, budget_initial, "
-                + "budget_final, charge_projet, etat_avancement from projet where idprojet = ?");
-        stmtInsertProjet = cx.getConnection().prepareStatement(
-                "insert into projet (idcompagnie, idcommunaute, date_debut, date_fin, date_annonce, budget_initial, "
-                + "budget_final, charge_projet, etat_avancement) values (?,?,?,?,?,?,?,?,?)");
-        stmtUpdateProjet = cx.getConnection().prepareStatement(
-                "update projet set idCompagnie = ?, idcommunaute = ?, date_debut = ?, date_fin = ?, date_annonce = ?,"
-                + "budget_initial = ?, budget_final = ?, charge_projet = ?, etat_avancement = ? where idprojet = ?");
-        stmtDeleteProjet = cx.getConnection().prepareStatement(
-                "delete from projet where idprojet= ?");
-
-        stmtSelectProjetsCommu = cx.getConnection().prepareStatement(
-                "select p.* from projet p left join communaute c on p.idcommunaute = c.idcommunaute where c.nom_communaute= ?");
-
-        stmtSelectProjetsComp = cx.getConnection().prepareStatement(
-                "select p.* from projet p left join compagnie c on c.idcompagnie = p.idcompagnie where c.nom_compagnie= ?");
+        projetCollection = cx.getDatabase().getCollection("projet");
     }
 
     public boolean existe(int idProjet) throws SQLException {
-        stmtExisteProjet.setInt(1, idProjet);
-
-        ResultSet rs;
-        try {
-            rs = stmtExisteProjet.executeQuery();
-            boolean result = rs.next();
-            rs.close();
-            return result;
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL" + e);
-        }
+    	return projetCollection.find(eq("idProjet", idProjet)).first() != null;
     }
 
-    public ResultSet getProjet(int idProjet) throws SQLException {
-        stmtExisteProjet_id.setInt(1, idProjet);
-
-        ResultSet rs;
-        try {
-            rs = stmtExisteProjet_id.executeQuery();
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL: " + e);
-        }
-
-        return rs;
+    public Projet getProjet(int idProjet) throws SQLException {
+       Document d = projetCollection.find(eq("idProjet", idProjet)).first();
+    	if(d != null)
+    	{
+    		return new Projet(d);
+    	}
+        return null;
     }
 
 
     /* Statements INSERT */
     public int ajouterProjet(Projet projet) throws SQLException {
-        stmtInsertProjet.setInt(1, projet.idCompagnie);
-        stmtInsertProjet.setInt(2, projet.idCommunaute);
-        stmtInsertProjet.setDate(3, projet.dateDebut);
-        stmtInsertProjet.setDate(4, projet.dateFin);
-        stmtInsertProjet.setDate(5, projet.dateAnnonce);
-        stmtInsertProjet.setFloat(6, projet.budgetInitial);
-        stmtInsertProjet.setFloat(7, projet.budgetFinal);
-        stmtInsertProjet.setString(8, projet.chargeProjet);
-        stmtInsertProjet.setString(9, projet.etatAvancement);
+        // Ajout du livre.
+        projetCollection.insertOne(projet.toDocument());
 
-        int rs = 0;
-        try {
-            rs = stmtInsertProjet.executeUpdate();
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL: " + e);
-        }
-
-        return rs;
+        return 1;
     }
 
 //idCommunaute, idCompagnie, budgetInitial, budgetFinal, charge, dateAnnonce, dateDebut, dateFin, etatAvancement, idProjet
     /* Statements UPDATE */
     public int editerProjet(Projet projet, int idProjet) throws SQLException, SeauSException {
-        stmtUpdateProjet.setInt(1, projet.idCompagnie);
-        stmtUpdateProjet.setInt(2, projet.idCommunaute);
-        stmtUpdateProjet.setDate(3, projet.dateDebut);
-        stmtUpdateProjet.setDate(4, projet.dateFin);
-        stmtUpdateProjet.setDate(5, projet.dateAnnonce);
-        stmtUpdateProjet.setFloat(6, projet.budgetInitial);
-        stmtUpdateProjet.setFloat(7, projet.budgetFinal);
-        stmtUpdateProjet.setString(8, projet.chargeProjet);
-        stmtUpdateProjet.setString(9, projet.etatAvancement);
-        stmtUpdateProjet.setInt(10, idProjet);
+        return (int)projetCollection.updateOne(eq("idProjet", idProjet),
+         combine(
+            set("idrojet", projet.idProjet),
+            set("idcompagnie", projet.idCompagnie),
+            set("idcommunaute", projet.idCommunaute),
+            set("date_annonce", projet.dateAnnonce),
+            set("date_debut", projet.dateDebut),
+            set("date_fin", projet.dateFin),
+            set("budget_initial", projet.budgetInitial),
+            set("budget_final", projet.budgetFinal),
+            set("charge_projet", projet.chargeProjet),
+            set("etat_avancement", projet.etatAvancement)
 
-        int rs = 0;
-        try {
-            rs = stmtUpdateProjet.executeUpdate();
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL: " + e);
-        }
-
-        return rs;
+        )).getModifiedCount();
     }
 
     /* Statements DELETE */
     public int supprimerProjet(int idProjet) throws SQLException {
-        stmtDeleteProjet.setInt(1, idProjet);
-
-        int rs = 0;
-        try {
-            rs = stmtDeleteProjet.executeUpdate();
-        } catch (SQLException e) {
-            throw new SQLException("Erreur dans l'exécution du Query SQL: " + e);
-        }
-
-        return rs;
-    }
-
-    public PreparedStatement getProjetsCommuStatement() {
-        return stmtSelectProjetsCommu;
-    }
-
-    public PreparedStatement getProjetsCompStatement() {
-        return stmtSelectProjetsComp;
+        return (int)projetCollection.deleteOne(eq("idProjet", idProjet)).getDeletedCount();
     }
 
 }

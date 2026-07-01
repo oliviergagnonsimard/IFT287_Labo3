@@ -1,10 +1,16 @@
 package SeauS;
 
-import SeauS.bdd.Connexion;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.SQLException;
-import java.text.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.StringTokenizer;
+
+import SeauS.bdd.Connexion;
 
 /**
  * Interface du système de gestion SeauS
@@ -61,7 +67,6 @@ public class SeauS
         if (args.length < 4)
         {
             System.out.println("Usage: java SeauS <serveur> <bd> <user> <password> [<fichier-transactions>]");
-            System.out.println(Connexion.serveursSupportes());
             return;
         }
         

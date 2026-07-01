@@ -12,13 +12,11 @@ import SeauS.documents.Communaute;
 
 public class Communautes extends GestionTables {
 
-    private Connexion cx;
     private MongoCollection<Document> communauteCollection;
 
     public Communautes(Connexion cx) {
         super(cx);
 
-        this.cx = cx;
         communauteCollection = cx.getDatabase().getCollection("communaute");
     }
 
@@ -43,24 +41,26 @@ public class Communautes extends GestionTables {
     }
 
     /* Statements INSERT */
-    public void ajouterCommunaute(Communaute communaute) {
+    public int ajouterCommunaute(Communaute communaute) {
         communauteCollection.insertOne(communaute.toDocument());
+
+        return 1;
     }
 
     /* Statements DELETE */
-    public boolean supprimerCommunaute(String nom) {
-        return communauteCollection.deleteOne(eq("nom_communaute", nom)).getDeletedCount() > 0;
+    public int supprimerCommunaute(String nom) {
+        return (int)communauteCollection.deleteOne(eq("nom_communaute", nom)).getDeletedCount();
     }
 
     /* Statements UPDATE */
-    public void editerCommunaute(Communaute communaute, String ancienNom) {
-    	communauteCollection.updateOne(eq("nom_communaute", ancienNom),
+    public int editerCommunaute(Communaute communaute, String ancienNom) {
+    	return (int)communauteCollection.updateOne(eq("nom_communaute", ancienNom),
          combine(
             set("nom_communaute", communaute.nom_communaute),
             set("chef_communaute", communaute.chef_communaute),
             set("nation", communaute.nation),
             set("coordonnees", communaute.coordonnees)
-        ));
+        )).getModifiedCount();
     }
     
 }
